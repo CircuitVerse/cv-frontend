@@ -81,7 +81,7 @@ function setupElementLists() {
 
     function createIcon(element) {
         return `<div class="icon logixModules" id="${element}" >
-            <img src= "/home/deku/2sim/img/${element}.svg" >
+            <img src= "img/${element}.svg" >
             <p class="img__description">${element}</p>
         </div>`;
     }
