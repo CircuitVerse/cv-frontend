@@ -1,0 +1,43 @@
+{
+  "name": "simulator",
+  "version": "1.0.0",
+  "description": "Frontend",
+  "main": "./src/app.js",
+  "scripts": {
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production",
+    "start": "webpack-dev-server --mode development --open",
+    "test": "n/a"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shubhankarsharma00/Cv-frontend.git"
+  },
+  "author": "Shubhankar Sharma",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shubhankarsharma00/Cv-frontend/issues"
+  },
+  "homepage": "https://github.com/shubhankarsharma00/Cv-frontend#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/register": "^7.9.0",
+    "jasmine": "^3.5.0",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3"
+  },
+  "dependencies": {
+    "babel-loader": "^8.1.0",
+    "css-loader": "^3.4.2",
+    "jquery": "^3.4.1",
+    "jquery-ui": "^1.12",
+    "jquery-ui-bundle": "^1.12.1-migrate",
+    "jquery-ui-dist": "^1.12.1",
+    "style-loader": "^1.1.3",
+    "turbolinks": "^5.2.0"
+  }
+}
