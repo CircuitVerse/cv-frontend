@@ -7,7 +7,6 @@ export class AndGate extends CircuitElement {
     constructor(x, y, scope = globalScope, dir = "RIGHT", bitWidth = 1) {
         super(x, y, scope , dir, bitWidth)
         var inputLength = 2
-        console.log(this)
         this.rectangleObject = false;
         this.setDimensions(15, 20);
         this.inp = [];

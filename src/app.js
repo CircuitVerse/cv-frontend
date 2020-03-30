@@ -8,8 +8,8 @@ require('jquery-ui');
 require('jquery-ui-dist/jquery-ui');
 
 // jquery-ui theme
-require('../node_modules/jquery-ui-dist/jquery-ui.css');
-require('../node_modules/jquery-ui-dist/jquery-ui.theme.css');
+// require('../node_modules/jquery-ui-dist/jquery-ui.css');
+// require('../node_modules/jquery-ui-dist/jquery-ui.theme.css');
 
 // jquery-ui theme
 // require.context('file-loader?name=[path][name].[ext]&context=node_modules/jquery-ui-dist!jquery-ui-dist', true, /jquery-ui.css/);

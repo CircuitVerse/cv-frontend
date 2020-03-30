@@ -4,7 +4,7 @@ module.exports = {
   entry: './src/app.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'js/bundle.js'
+    filename: 'bundle.js'
   },
   devServer: {
     contentBase: './dist'
@@ -22,7 +22,6 @@ module.exports = {
         use: ['style-loader', 'css-loader'],
       },
       { test: /\.(jpe?g|png|gif)$/i, use: "file-loader" },
-
     ]
   }
 }

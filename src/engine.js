@@ -291,7 +291,6 @@ function play(scope = globalScope, resetNodes = false) {
     if (errorDetected) return; // Don't simulate until error is fixed
 
     if (loading == true) return; // Don't simulate until loaded
-    console.log(plotArea)
     if (!embed) plotArea.stopWatch.Stop(); // Waveform thing
 
     // Reset Nodes if required
@@ -344,7 +343,6 @@ function play(scope = globalScope, resetNodes = false) {
 
     // Check for TriState Contentions
     if (simulationArea.contentionPending.length) {
-        console.log(simulationArea.contentionPending)
         showError("Contention at TriState");
         forceResetNodes = true
         errorDetected = true;
