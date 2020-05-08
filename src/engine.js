@@ -343,7 +343,6 @@ function play(scope = globalScope, resetNodes = false) {
 
     // Check for TriState Contentions
     if (simulationArea.contentionPending.length) {
-        // console.log(simulationArea.contentionPending)
         showError("Contention at TriState");
         forceResetNodes = true
         errorDetected = true;
