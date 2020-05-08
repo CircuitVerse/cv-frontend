@@ -1,4 +1,3 @@
-// import { oppositeDirection } from "./canvasApi";
 import { scheduleUpdate } from "./engine";
 import { width,height } from "./circuit";
 import { simulationArea } from "./simulationArea";

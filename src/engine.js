@@ -9,7 +9,7 @@ var totalObjects = 0;
 
 // Function to check for any UI update, it is throttled by time
 export function scheduleUpdate(count = 0, time = 100, fn) {
-
+    // console.log(simulationArea.lastSelected)
 
     if (count && !layoutMode) { // Force update
         update();
@@ -291,7 +291,6 @@ function play(scope = globalScope, resetNodes = false) {
     if (errorDetected) return; // Don't simulate until error is fixed
 
     if (loading == true) return; // Don't simulate until loaded
-    console.log(plotArea)
     if (!embed) plotArea.stopWatch.Stop(); // Waveform thing
 
     // Reset Nodes if required
@@ -344,7 +343,7 @@ function play(scope = globalScope, resetNodes = false) {
 
     // Check for TriState Contentions
     if (simulationArea.contentionPending.length) {
-        console.log(simulationArea.contentionPending)
+        // console.log(simulationArea.contentionPending)
         showError("Contention at TriState");
         forceResetNodes = true
         errorDetected = true;

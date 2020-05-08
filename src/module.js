@@ -3,10 +3,25 @@ import { Node, findNode } from "./node";
 import { simulationArea } from "./simulationArea";
 import { correctWidth,lineTo,moveTo,arc } from "./canvasApi";
 
+function changeInputSize(size) {
+    if (size == undefined || size < 2 || size > 10) return;
+    if (this.inputSize == size) return;
+    size = parseInt(size, 10)
+    console.log(this.objectType, size)
+    var obj = new window[this.objectType](this.x, this.y, this.scope, this.direction, size, this.bitWidth);
+    simulationArea.lastSelected = obj;
+    this.delete();
+    console.log("obj", obj)
+    return obj;
+    // showProperties(obj);
+}
+
+export var moduleProperty = { "changeInputSize": changeInputSize } 
+
+
 export class AndGate extends CircuitElement {
-    constructor(x, y, scope = globalScope, dir = "RIGHT", bitWidth = 1) {
+    constructor(x, y, scope = globalScope, dir = "RIGHT", inputLength = 2, bitWidth = 1) {
         super(x, y, scope , dir, bitWidth)
-        var inputLength = 2
         console.log(this)
         this.rectangleObject = false;
         this.setDimensions(15, 20);
@@ -94,10 +109,10 @@ export class AndGate extends CircuitElement {
     }
 }
 
-// AndGate.prototype.tooltipText = "And Gate Tooltip : Implements logical conjunction";
-// AndGate.prototype.alwaysResolve = true;
-// AndGate.prototype.verilogType = "and";
-// AndGate.prototype.changeInputSize = changeInputSize;
+AndGate.prototype.tooltipText = "And Gate Tooltip : Implements logical conjunction";
+AndGate.prototype.alwaysResolve = true;
+AndGate.prototype.verilogType = "and";
+AndGate.prototype.changeInputSize = changeInputSize;
 
 // class NandGate extends CircuitElement {
 //     constructor(x, y, scope = globalScope, dir = "RIGHT", inputLength = 2, bitWidth = 1) {
