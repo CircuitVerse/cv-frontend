@@ -109,7 +109,7 @@ export function setupUI() {
         }
     });
     $('.logixButton').click(function () {
-        window[this.id]();
+        logixFundtion[this.id]();
     });
     // var dummyCounter=0;
 

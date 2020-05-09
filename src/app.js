@@ -4,8 +4,9 @@ window.$ = $
 window.jQuery = $
 
 // require('../node_modules/jquery-ui-dist!jquery-ui-dist/jquery-ui.css');
-require('jquery-ui');
-require('jquery-ui-dist/jquery-ui');
+import 'jquery-ui'
+import 'jquery-ui-dist/jquery-ui'
+import 'bootstrap'
 
 // jquery-ui theme
 // require('../node_modules/jquery-ui-dist/jquery-ui.css');
