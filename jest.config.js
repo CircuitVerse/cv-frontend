@@ -1,5 +1,6 @@
 module.exports = {
     preset: "jest-puppeteer",
+    setupFiles: ["./jest.setup.js"],
     globals: {
         URL: "http://localhost:8080"
     },

@@ -1,28 +1,13 @@
-import $ from 'jquery';
+import { setup } from './setup';
+import Array from './arrayHelpers';
+import 'bootstrap';
 
-window.$ = $
-window.jQuery = $
-
-// require('../node_modules/jquery-ui-dist!jquery-ui-dist/jquery-ui.css');
 import 'jquery-ui'
 import 'jquery-ui-dist/jquery-ui'
 import 'bootstrap'
 
-// jquery-ui theme
-// require('../node_modules/jquery-ui-dist/jquery-ui.css');
-// require('../node_modules/jquery-ui-dist/jquery-ui.theme.css');
+document.addEventListener('DOMContentLoaded', () => {
+    setup();
+});
 
-// jquery-ui theme
-// require.context('file-loader?name=[path][name].[ext]&context=node_modules/jquery-ui-dist!jquery-ui-dist', true, /jquery-ui.css/);
-// require.context('file-loader?name=[path][name].[ext]&context=node_modules/jquery-ui-dist!jquery-ui-dist', true, /jquery-ui\.theme\.css/);
-// import 'jquery-ujs';
-// var Turbolinks = require("turbolinks");
-// Turbolinks.start();
-
-// import 
-import { setup } from './circuit'
-import { AndGate } from './module'
-import { Array } from './arrayHelpers'
-window.setup = setup
-window["AndGate"] = AndGate
-window["Array"] = Array
+window.Array = Array;
