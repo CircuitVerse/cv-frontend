@@ -2,7 +2,9 @@
 // var Turbolinks = require("turbolinks");
 // Turbolinks.start();
 import { width } from "./circuit"
+import { scheduleUpdate } from "./engine"
 import { simulationArea } from "./simulationArea";
+// import { moduleProperty } from "./module"
 window.smartDropXX = 50;
 window.smartDropYY = 80;
 
@@ -96,7 +98,7 @@ export function setupUI() {
         //////console.log(smartDropXX,smartDropYY);
         if (simulationArea.lastSelected && simulationArea.lastSelected.newElement) simulationArea.lastSelected.delete();
         console.log(this.id)
-        var obj = new window[this.id](80,50); //(simulationArea.mouseX,simulationArea.mouseY);
+        var obj = new window[this.id](); //(simulationArea.mouseX,simulationArea.mouseY);
         simulationArea.lastSelected = obj;
         // simulationArea.lastSelected=obj;
         // simulationArea.mouseDown=true;
@@ -107,7 +109,7 @@ export function setupUI() {
         }
     });
     $('.logixButton').click(function () {
-        window[this.id]();
+        logixFundtion[this.id]();
     });
     // var dummyCounter=0;
 
@@ -156,6 +158,7 @@ export function showProperties(obj) {
         // $('#moduleProperty-inner').append("<p>  ");
         $('#moduleProperty-inner').append("<p><button type='button' class='objectPropertyAttributeChecked btn btn-danger btn-xs' name='deleteCurrentCircuit' >Delete Circuit</button>  <button type='button' class='objectPropertyAttributeChecked btn btn-primary btn-xs' name='toggleLayoutMode' >Edit layout</button> </p>");
     } else {
+        console.log("ls:",simulationArea.lastSelected)
         $('#moduleProperty').show();
 
         $('#moduleProperty-inner').append("<div id='moduleProperty-header'>" + obj.objectType + "</div>");
@@ -238,24 +241,31 @@ export function showProperties(obj) {
         scheduleUpdate();
         updateCanvas = true;
         wireToBeChecked = 1;
-        if (simulationArea.lastSelected && simulationArea.lastSelected[this.name])
+        console.log("module prop",simulationArea.lastSelected)
+        if (simulationArea.lastSelected && simulationArea.lastSelected[this.name]){
             prevPropertyObj = simulationArea.lastSelected[this.name](this.value) || prevPropertyObj;
-        else
-            window[this.name](this.value);
+            simulationArea.lastSelected = prevPropertyObj
+        }
+        // else{
+        //     simulationArea.lastSelected = moduleProperty[this.name](this.value);
+        // }
     })
     $(".objectPropertyAttributeChecked").on("change keyup paste click", function () {
         // return;
         //////console.log(this.name+":"+this.value);
-
-
-
+        
+        
+        
         scheduleUpdate();
         updateCanvas = true;
         wireToBeChecked = 1;
-        if (simulationArea.lastSelected && simulationArea.lastSelected[this.name])
+        if (simulationArea.lastSelected && simulationArea.lastSelected[this.name]){
             prevPropertyObj = simulationArea.lastSelected[this.name](this.value) || prevPropertyObj;
-        else
-            window[this.name](this.checked);
+            simulationArea.lastSelected = prevPropertyObj
+        }
+        // else{
+        //     moduleProperty[this.name](this.checked);
+        // }
     })
 }
 

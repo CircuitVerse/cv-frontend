@@ -9,7 +9,7 @@ var totalObjects = 0;
 
 // Function to check for any UI update, it is throttled by time
 export function scheduleUpdate(count = 0, time = 100, fn) {
-
+    // console.log(simulationArea.lastSelected)
 
     if (count && !layoutMode) { // Force update
         update();

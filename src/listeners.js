@@ -19,7 +19,6 @@ export function startListeners() {
     document.getElementById("simulationArea").addEventListener('mousedown', function (e) {
 
         $("input").blur();
-        console.log(globalScope)
         errorDetected = false;
         updateSimulation = true;
         updatePosition = true;
@@ -419,7 +418,7 @@ function delete_selected() {
 
     $("input").blur();
     hideProperties();
-    console.log(simulationArea.lastSelected)
+    // console.log(simulationArea.lastSelected)
     if (simulationArea.lastSelected && !(simulationArea.lastSelected.objectType == "Node" && simulationArea.lastSelected.type != 2)) simulationArea.lastSelected.delete();
     for (var i = 0; i < simulationArea.multipleObjectSelections.length; i++) {
         if (!(simulationArea.multipleObjectSelections[i].objectType == "Node" && simulationArea.multipleObjectSelections[i].type != 2)) simulationArea.multipleObjectSelections[i].cleanDelete();
