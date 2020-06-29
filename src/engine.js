@@ -1,232 +1,349 @@
-import { plotArea } from "./plotArea";
-import { simulationArea } from "./simulationArea";
-import { dots, canvasMessage } from "./canvasApi";
-import { showProperties } from "./ux";
-// Engine.js
-// Core of the simulation and rendering algorithm
+/* eslint-disable import/no-cycle */
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-continue */
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-bitwise */
+import { layoutModeGet } from './layoutMode';
+import plotArea from './plotArea';
+import { layoutUpdate } from './layoutMode';
+import simulationArea from './simulationArea';
+import {
+    dots, canvasMessage, findDimensions, rect2,
+} from './canvasApi';
+import { showProperties, prevPropertyObjGet } from './ux';
+import { showError } from './utils';
+import miniMapArea from './minimap';
+import { createNodeGet } from './listeners';
+import { resetup } from './setup';
 
-var totalObjects = 0;
+/**
+ * Core of the simulation and rendering algorithm.
+ */
 
-// Function to check for any UI update, it is throttled by time
-export function scheduleUpdate(count = 0, time = 100, fn) {
-    // console.log(simulationArea.lastSelected)
+/**
+ * @type {number} engine
+ * @category engine
+ */
+let wireToBeChecked = 0;
 
-    if (count && !layoutMode) { // Force update
-        update();
-        for (var i = 0; i < count; i++)
-            setTimeout(update, 10 + 50 * i);
+/**
+ * Used to set wireChecked boolean which updates wires in UI if true (or 1). 2 if some problem and it is handled.
+ * @param {number} param - value of wirechecked
+ * @category engine
+ */
+export function wireToBeCheckedSet(param) {
+    wireToBeChecked = param;
+}
+
+/**
+ * scheduleUpdate() will be called if true
+ * @type {boolean}
+ * @category engine
+ */
+let willBeUpdated = false;
+
+/**
+ * used to set willBeUpdated variable
+ * @type {boolean}
+ * @category engine
+ * @category engine
+ */
+export function willBeUpdatedSet(param) {
+    willBeUpdated = param;
+}
+
+/**
+ * true if we have an element selected and
+ * is used when we are paning the grid.
+ * @type {boolean}
+ * @category engine
+ */
+let objectSelection = false;
+
+/**
+ * used to set the value of object selection,
+ * @param {boolean} param
+ * @category engine
+ */
+export function objectSelectionSet(param) {
+    objectSelection = param;
+}
+
+/**
+ * Flag for updating position
+ * @type {boolean}
+ * @category engine
+ */
+let updatePosition = true;
+
+/**
+ * used to set the value of updatePosition.
+ * @param {boolean} param
+ * @category engine
+ */
+export function updatePositionSet(param) {
+    updatePosition = param;
+}
+
+/**
+ * Flag for updating simulation
+ * @type {boolean}
+ * @category engine
+ */
+let updateSimulation = true;
+
+/**
+ * used to set the value of updateSimulation.
+ * @param {boolean} param
+ * @category engine
+ */
+export function updateSimulationSet(param) {
+    updateSimulation = param;
+}
+/**
+ * Flag for rendering
+ * @type {boolean}
+ * @category engine
+ */
+let updateCanvas = true;
+
+/**
+ * used to set the value of updateCanvas.
+ * @param {boolean} param
+ * @category engine
+ */
+export function updateCanvasSet(param) {
+    updateCanvas = param;
+}
+
+/**
+ *  Flag for updating grid
+ * @type {boolean}
+ * @category engine
+ */
+let gridUpdate = true;
+
+/**
+ * used to set gridUpdate
+ * @param {boolean} param
+ * @category engine
+ */
+export function gridUpdateSet(param) {
+    gridUpdate = param;
+}
+/**
+ *  Flag for updating grid
+ * @type {boolean}
+ * @category engine
+ */
+let forceResetNodes = true;
+
+/**
+ * used to set forceResetNodes
+ * @param {boolean} param
+ * @category engine
+ */
+export function forceResetNodesSet(param) {
+    forceResetNodes = param;
+}
+/**
+ *  Flag for updating grid
+ * @type {boolean}
+ * @category engine
+ */
+let errorDetected = false;
+
+/**
+ * used to set errorDetected
+ * @param {boolean} param
+ * @category engine
+ */
+export function errorDetectedSet(param) {
+    errorDetected = param;
+}
+
+/**
+ * used to set errorDetected
+ * @returns {boolean} errorDetected
+ * @category engine
+ */
+export function errorDetectedGet() {
+    return errorDetected;
+}
+
+/**
+ * details of where and what canvas message has to be shown.
+ * @type {Object}
+ * @property {number} x - x cordinate of message
+ * @property {number} y - x cordinate of message
+ * @property {number} string - the message
+ * @category engine
+*/
+export let canvasMessageData = {
+    x: undefined,
+    y: undefined,
+    string: undefined,
+};
+
+/**
+ *  Flag for updating subCircuits
+ * @type {boolean}
+ * @category engine
+ */
+let updateSubcircuit = true;
+
+/**
+ * used to set updateSubcircuit
+ * @param {boolean} param
+ * @category engine
+ */
+export function updateSubcircuitSet(param) {
+    // console.log(updateSubcircuit,param);
+    if (updateSubcircuit != param) {
+        updateSubcircuit = param;
+        return true;
     }
+    updateSubcircuit = param;
+    return false;
+}
 
-    if (willBeUpdated) return; // Throttling
+/**
+ * turn light mode on
+ * @param {boolean} val -- new value for light mode
+ * @category engine
+ */
+export function changeLightMode(val) {
+    if (!val && lightMode) {
+        lightMode = false;
+        DPR = window.devicePixelRatio || 1;
+        globalScope.scale *= DPR;
+    } else if (val && !lightMode) {
+        lightMode = true;
+        globalScope.scale /= DPR;
+        DPR = 1;
+        $('#miniMap').fadeOut('fast');
+    }
+    resetup();
+}
 
-    willBeUpdated = true;
-
-    if (layoutMode) {
-        setTimeout(layoutUpdate, time); // Update layout, different algorithm
+/**
+ * Function to render Canvas according th renderupdate order
+ * @param {Scope} scope - The circuit whose canvas we want to render
+ * @category engine
+ */
+export function renderCanvas(scope) {
+    if (layoutModeGet()) { // Different Algorithm
         return;
     }
-
-    // Call a function before update ..
-    if (fn)
-        setTimeout(function () {
-            fn();
-            update();
-        }, time);
-    else setTimeout(update, time);
-
+    const ctx = simulationArea.context;
+    // Reset canvas
+    simulationArea.clear();
+    // Update Grid
+    if (gridUpdate) {
+        gridUpdateSet(false);
+        dots();
+    }
+    canvasMessageData = {
+        x: undefined,
+        y: undefined,
+        string: undefined,
+    }; //  Globally set in draw fn ()
+    // Render objects
+    for (let i = 0; i < renderOrder.length; i++) {
+        for (let j = 0; j < scope[renderOrder[i]].length; j++) { scope[renderOrder[i]][j].draw(); }
+    }
+    // Show any message
+    if (canvasMessageData.string !== undefined) {
+        canvasMessage(ctx, canvasMessageData.string, canvasMessageData.x, canvasMessageData.y);
+    }
+    // If multiple object selections are going on, show selected area
+    if (objectSelection) {
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'black';
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        rect2(ctx, simulationArea.mouseDownX, simulationArea.mouseDownY, simulationArea.mouseX - simulationArea.mouseDownX, simulationArea.mouseY - simulationArea.mouseDownY, 0, 0, 'RIGHT');
+        ctx.stroke();
+        ctx.fill();
+    }
+    if (simulationArea.hover !== undefined) {
+        simulationArea.canvas.style.cursor = 'pointer';
+    } else if (createNodeGet()) {
+        simulationArea.canvas.style.cursor = 'grabbing';
+    } else {
+        simulationArea.canvas.style.cursor = 'default';
+    }
 }
 
-// fn that calls update on everything else. If any change is there, it resolves the circuit and draws it again
-
-export function update(scope = globalScope, updateEverything = false) {
-
-    willBeUpdated = false;
-    if (loading == true || layoutMode) return;
-
-    var updated = false;
-    simulationArea.hover = undefined;
-
-    // Update wires
-    if (wireToBeChecked || updateEverything) {
-        if (wireToBeChecked == 2) wireToBeChecked = 0; // this required due to timing issues
-        else wireToBeChecked++;
-        // WHY IS THIS REQUIRED ???? we are checking inside wire ALSO
-        var prevLength = scope.wires.length;
-        for (var i = 0; i < scope.wires.length; i++) {
-            scope.wires[i].checkConnections();
-            if (scope.wires.length != prevLength) {
-                prevLength--;
-                i--;
-            }
-        }
-        scheduleUpdate();
-    }
-
-    // Update subcircuits
-    if (updateSubcircuit || updateEverything) {
-        for (var i = 0; i < scope.SubCircuit.length; i++)
-            scope.SubCircuit[i].reset();
-        updateSubcircuit = false;
-    }
-
-    // Update UI position
-    if (updatePosition || updateEverything) {
-        for (var i = 0; i < updateOrder.length; i++)
-        for (var j = 0; j < scope[updateOrder[i]].length; j++) {
-                updated |= scope[updateOrder[i]][j].update();
-            }
-    }
-
-    // Updates multiple objectselections and panes window
-    if (updatePosition || updateEverything) {
-        updateSelectionsAndPane(scope);
-    }
-
-    // Update MiniMap
-    if (!embed && simulationArea.mouseDown && simulationArea.lastSelected && simulationArea.lastSelected != globalScope.root) {
-        if (!lightMode)
-            $('#miniMap').fadeOut('fast');
-    }
-
-    // Run simulation
-    if (updateSimulation) {
-        play();
-    }
-
-    // Show properties of selected element
-    if (!embed && prevPropertyObj != simulationArea.lastSelected) {
-        if (simulationArea.lastSelected && simulationArea.lastSelected.objectType !== "Wire") {
-            showProperties(simulationArea.lastSelected);
-        } else {
-            // hideProperties();
-        }
-    }
-
-    //Draw, render everything
-    if (updateCanvas) {
-        renderCanvas(scope);
-    }
-    updateSimulation = updateCanvas = updatePosition = false;
-
-}
-
-// Function to find dimensions of the current circuit
-export function findDimensions(scope = globalScope) {
-    totalObjects = 0;
-    simulationArea.minWidth = undefined;
-    simulationArea.maxWidth = undefined;
-    simulationArea.minHeight = undefined;
-    simulationArea.maxHeight = undefined;
-    for (var i = 0; i < updateOrder.length; i++) {
-        if (updateOrder[i] !== 'wires')
-            for (var j = 0; j < scope[updateOrder[i]].length; j++) {
-
-                totalObjects += 1;
-                var obj = scope[updateOrder[i]][j];
-                if (totalObjects == 1) {
-                    simulationArea.minWidth = obj.absX();
-                    simulationArea.minHeight = obj.absY();
-                    simulationArea.maxWidth = obj.absX();
-                    simulationArea.maxHeight = obj.absY();
-                }
-                if (obj.objectType != 'Node') {
-                    if (obj.y - obj.upDimensionY < simulationArea.minHeight)
-                        simulationArea.minHeight = obj.y - obj.upDimensionY;
-                    if (obj.y + obj.downDimensionY > simulationArea.maxHeight)
-                        simulationArea.maxHeight = obj.y + obj.downDimensionY;
-                    if (obj.x - obj.leftDimensionX < simulationArea.minWidth)
-                        simulationArea.minWidth = obj.x - obj.leftDimensionX;
-                    if (obj.x + obj.rightDimensionX > simulationArea.maxWidth)
-                        simulationArea.maxWidth = obj.x + obj.rightDimensionX;
-                } else {
-                    if (obj.absY() < simulationArea.minHeight)
-                        simulationArea.minHeight = obj.absY();
-                    if (obj.absY() > simulationArea.maxHeight)
-                        simulationArea.maxHeight = obj.absY();
-                    if (obj.absX() < simulationArea.minWidth)
-                        simulationArea.minWidth = obj.absX();
-                    if (obj.absX() > simulationArea.maxWidth)
-                        simulationArea.maxWidth = obj.absX();
-                }
-
-            }
-
-    }
-    simulationArea.objectList = updateOrder;
-
-}
-
-// Function to move multiple objects and panes window
+/**
+ * Function to move multiple objects and panes window
+ * deselected using dblclick right now (PR open for esc key)
+ * @param {Scope=} scope - the circuit in which we are selecting stuff
+ * @category engine
+ */
 export function updateSelectionsAndPane(scope = globalScope) {
-
     if (!simulationArea.selected && simulationArea.mouseDown) {
-
         simulationArea.selected = true;
         simulationArea.lastSelected = scope.root;
         simulationArea.hover = scope.root;
-
         // Selecting multiple objects
         if (simulationArea.shiftDown) {
-            objectSelection = true;
-        } else {
-            if (!embed) {
-                findDimensions(scope);
-                // miniMapArea.setup();
-                $('#miniMap').show();
-            }
+            objectSelectionSet(true);
+        } else if (!embed) {
+            findDimensions(scope);
+            miniMapArea.setup();
+            $('#miniMap').show();
         }
-    } else if (simulationArea.lastSelected == scope.root && simulationArea.mouseDown) {
-
-        //pane canvas
+    } else if (simulationArea.lastSelected === scope.root && simulationArea.mouseDown) {
+        // pane canvas to give an idea of grid moving
         if (!objectSelection) {
             globalScope.ox = (simulationArea.mouseRawX - simulationArea.mouseDownRawX) + simulationArea.oldx;
             globalScope.oy = (simulationArea.mouseRawY - simulationArea.mouseDownRawY) + simulationArea.oldy;
             globalScope.ox = Math.round(globalScope.ox);
             globalScope.oy = Math.round(globalScope.oy);
-            gridUpdate = true;
-            // if (!embed && !lightMode) miniMapArea.setup();
+            gridUpdateSet(true);
+            if (!embed && !lightMode) miniMapArea.setup();
         } else {
-
+            // idea: kind of empty
         }
-
-
-    } else if (simulationArea.lastSelected == scope.root) {
-
-        // Select multiple objects
-
+    } else if (simulationArea.lastSelected === scope.root) {
+        /*
+        Select multiple objects by adding them to the array
+        simulationArea.multipleObjectSelections when we select
+        using shift + mouse movement to select an area but
+        not shift + click
+        */
         simulationArea.lastSelected = undefined;
         simulationArea.selected = false;
         simulationArea.hover = undefined;
-
         if (objectSelection) {
-            objectSelection = false;
-            var x1 = simulationArea.mouseDownX;
-            var x2 = simulationArea.mouseX;
-            var y1 = simulationArea.mouseDownY;
-            var y2 = simulationArea.mouseY;
-
-            // Sort points
+            objectSelectionSet(false);
+            let x1 = simulationArea.mouseDownX;
+            let x2 = simulationArea.mouseX;
+            let y1 = simulationArea.mouseDownY;
+            let y2 = simulationArea.mouseY;
+            // Sort those four points to make a selection pane
             if (x1 > x2) {
-                var temp = x1;
+                const temp = x1;
                 x1 = x2;
                 x2 = temp;
             }
             if (y1 > y2) {
-                var temp = y1;
+                const temp = y1;
                 y1 = y2;
                 y2 = temp;
             }
-
             // Select the objects, push them into a list
-            for (var i = 0; i < updateOrder.length; i++) {
-                for (var j = 0; j < scope[updateOrder[i]].length; j++) {
-                    var obj = scope[updateOrder[i]][j];
+            for (let i = 0; i < updateOrder.length; i++) {
+                for (let j = 0; j < scope[updateOrder[i]].length; j++) {
+                    const obj = scope[updateOrder[i]][j];
                     if (simulationArea.multipleObjectSelections.contains(obj)) continue;
-                    var x, y;
-                    if (obj.objectType == "Node") {
+                    let x; var
+                        y;
+                    if (obj.objectType === 'Node') {
                         x = obj.absX();
                         y = obj.absY();
-                    } else if (obj.objectType != "Wire") {
+                    } else if (obj.objectType !== 'Wire') {
                         x = obj.x;
                         y = obj.y;
                     } else {
@@ -241,115 +358,166 @@ export function updateSelectionsAndPane(scope = globalScope) {
     }
 }
 
-// Function to render Canvas according th renderupdate order
-export function renderCanvas(scope) {
-
-    if (layoutMode) { // Different Algorithm
-        return;
-    }
-
-    var ctx = simulationArea.context;
-
-    // Reset canvas
-    simulationArea.clear();
-
-    // Update Grid
-    if (gridUpdate) {
-        gridUpdate = false;
-        dots();
-    }
-
-    canvasMessageData = undefined; //  Globally set in draw fn ()
-
-    // Render objects
-    for (var i = 0; i < renderOrder.length; i++)
-        for (var j = 0; j < scope[renderOrder[i]].length; j++)
-            scope[renderOrder[i]][j].draw();
-
-    // Show any message
-
-    if (canvasMessageData) {
-        canvasMessage(ctx, canvasMessageData.string, canvasMessageData.x, canvasMessageData.y)
-    }
-
-    // If multiple object selections are going on, show selected area
-    if (objectSelection) {
-        ctx.beginPath();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "black"
-        ctx.fillStyle = "rgba(0,0,0,0.1)"
-        rect2(ctx, simulationArea.mouseDownX, simulationArea.mouseDownY, simulationArea.mouseX - simulationArea.mouseDownX, simulationArea.mouseY - simulationArea.mouseDownY, 0, 0, "RIGHT");
-        ctx.stroke();
-        ctx.fill();
-    }
-
-}
-
-//Main fn that resolves circuit using event driven simulation
-function play(scope = globalScope, resetNodes = false) {
-
+/**
+ * Main fn that resolves circuit using event driven simulation
+ * All inputs are added to a scope using scope.addinput() and
+ * the simulation starts to play.
+ * @param {Scope=} scope - the circuit we want to simulate
+ * @param {boolean} resetNodes - boolean to reset all nodes
+ * @category engine
+ */
+export function play(scope = globalScope, resetNodes = false) {
     if (errorDetected) return; // Don't simulate until error is fixed
-
-    if (loading == true) return; // Don't simulate until loaded
+    if (loading === true) return; // Don't simulate until loaded
     if (!embed) plotArea.stopWatch.Stop(); // Waveform thing
-
     // Reset Nodes if required
     if (resetNodes || forceResetNodes) {
         scope.reset();
         simulationArea.simulationQueue.reset();
-        forceResetNodes = false;
+        forceResetNodesSet(false);
     }
-
     // Temporarily kept for for future uses
     // else{
     //     // clearBuses(scope);
-    //     for(var i=0;i<scope.TriState.length;i++) {
+    //     for(let i=0;i<scope.TriState.length;i++) {
     //         // console.log("HIT2",i);
     //         scope.TriState[i].removePropagation();
     //     }
     // }
-
     // Add subcircuits if they can be resolved -- needs to be removed/ deprecated
-    for (var i = 0; i < scope.SubCircuit.length; i++) {
+    for (let i = 0; i < scope.SubCircuit.length; i++) {
         if (scope.SubCircuit[i].isResolvable()) simulationArea.simulationQueue.add(scope.SubCircuit[i]);
     }
-
     // To store list of circuitselements that have shown contention but kept temporarily
     // Mainly to resolve tristate bus issues
     simulationArea.contentionPending = [];
-
     // add inputs to the simulation queue
     scope.addInputs();
-
-    var stepCount = 0;
-    var elem = undefined
-
+    // to check if we have infinite loop in circuit
+    let stepCount = 0;
+    let elem;
     while (!simulationArea.simulationQueue.isEmpty()) {
         if (errorDetected) {
             simulationArea.simulationQueue.reset();
             return;
         }
-
         elem = simulationArea.simulationQueue.pop();
         elem.resolve();
         stepCount++;
-
         if (stepCount > 1000000) { // Cyclic or infinite Circuit Detection
-            showError("Simulation Stack limit exceeded: maybe due to cyclic paths or contention");
-            errorDetected = true;
-            forceResetNodes = true
+            showError('Simulation Stack limit exceeded: maybe due to cyclic paths or contention');
+            errorDetectedSet(true);
+            forceResetNodesSet(true);
         }
     }
-
     // Check for TriState Contentions
     if (simulationArea.contentionPending.length) {
-        showError("Contention at TriState");
-        forceResetNodes = true
-        errorDetected = true;
+        console.log(simulationArea.contentionPending);
+        showError('Contention at TriState');
+        forceResetNodesSet(true);
+        errorDetectedSet(true);
     }
-
     // Setting Flag Values
-    for (var i = 0; i < scope.Flag.length; i++)
-        scope.Flag[i].setPlotValue();
+    for (let i = 0; i < scope.Flag.length; i++) { scope.Flag[i].setPlotValue(); }
+}
 
+/**
+ * Function to check for any UI update, it is throttled by time
+ * @param {number=} count - this is used to force update
+ * @param {number=} time - the time throttling parameter
+ * @param {function} fn - function to run before updating UI
+ * @category engine
+ */
+export function scheduleUpdate(count = 0, time = 100, fn) {
+    if (lightMode) time *= 5;
+    if (count && !layoutModeGet()) { // Force update
+        update();
+        for (let i = 0; i < count; i++) { setTimeout(update, 10 + 50 * i); }
+    }
+    if (willBeUpdated) return; // Throttling
+    willBeUpdatedSet(true);
+    if (layoutModeGet()) {
+        setTimeout(layoutUpdate, time); // Update layout, different algorithm
+        return;
+    }
+    // Call a function before update ..
+    if (fn) {
+        setTimeout(() => {
+            fn();
+            update();
+        }, time);
+    } else setTimeout(update, time);
+}
+
+/**
+ * fn that calls update on everything else. If any change
+ * is there, it resolves the circuit and draws it again.
+ * Also updates simulations, selection, minimap, resolves
+ * circuit and redraws canvas if required.
+ * @param {Scope=} scope - the circuit to be updated
+ * @param {boolean=} updateEverything - if true we update the wires, nodes and modules
+ * @category engine
+ */
+export function update(scope = globalScope, updateEverything = false) {
+    willBeUpdatedSet(false);
+    if (loading === true || layoutModeGet()) return;
+    let updated = false;
+    simulationArea.hover = undefined;
+    // Update wires
+    if (wireToBeChecked || updateEverything) {
+        if (wireToBeChecked === 2) wireToBeChecked = 0; // this required due to timing issues
+        else wireToBeChecked++;
+        // WHY IS THIS REQUIRED ???? we are checking inside wire ALSO
+        // Idea: we can just call length again instead of doing it during loop.
+        let prevLength = scope.wires.length;
+        for (let i = 0; i < scope.wires.length; i++) {
+            scope.wires[i].checkConnections();
+            if (scope.wires.length !== prevLength) {
+                prevLength--;
+                i--;
+            }
+        }
+        scheduleUpdate();
+    }
+    // Update subcircuits
+    if (updateSubcircuit || updateEverything) {
+        for (let i = 0; i < scope.SubCircuit.length; i++) { scope.SubCircuit[i].reset(); }
+        updateSubcircuitSet(false);
+    }
+    // Update UI position
+    if (updatePosition || updateEverything) {
+        for (let i = 0; i < updateOrder.length; i++) {
+            for (let j = 0; j < scope[updateOrder[i]].length; j++) {
+                updated |= scope[updateOrder[i]][j].update();
+            }
+        }
+    }
+    // Updates multiple objectselections and panes window
+    if (updatePosition || updateEverything) {
+        updateSelectionsAndPane(scope);
+    }
+    // Update MiniMap
+    if (!embed && simulationArea.mouseDown && simulationArea.lastSelected && simulationArea.lastSelected !== globalScope.root) {
+        if (!lightMode) { $('#miniMap').fadeOut('fast'); }
+    }
+    // Run simulation
+    if (updateSimulation) {
+        play();
+    }
+    // Show properties of selected element
+    if (!embed && prevPropertyObjGet() !== simulationArea.lastSelected) {
+        if (simulationArea.lastSelected && simulationArea.lastSelected.objectType !== 'Wire') {
+            // ideas: why show properties of project in Nodes but not wires?
+            showProperties(simulationArea.lastSelected);
+        } else {
+            // hideProperties();
+        }
+    }
+    // Draw, render everything
+    if (updateCanvas) {
+        renderCanvas(scope);
+    }
+    updateSimulationSet(false);
+    updateCanvas = false;
+    updatePositionSet(false);
 }

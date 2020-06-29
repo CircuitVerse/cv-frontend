@@ -1,178 +1,179 @@
-import CircuitElement from "./circuitElement";
-import * as metadata from './metadata.json'
-import { generateId,newCircuit,showMessage } from "./utils";
-import { backgroundArea } from "./backgroundArea";
-import { plotArea } from "./plotArea";
-import { simulationArea } from "./simulationArea";
-import { dots } from "./canvasApi";
-import { update } from "./engine";
-import { setupUI } from "./ux";
-import { startListeners } from "./listeners";
-function setupEnvironment() {
-    
-    const projectId = generateId();
-    const updateSimulation = true;
-    const DPR = window.devicePixelRatio || 1;
-    newCircuit("Main");
-    
-    window.data = {}
-    resetup();
+/* eslint-disable import/no-cycle */
+/* eslint-disable no-bitwise */
+/* eslint-disable guard-for-in */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-restricted-globals */
+/* eslint-disable consistent-return */
+/* eslint-disable func-names */
+/* eslint-disable array-callback-return */
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-alert */
+import CircuitElement from './circuitElement';
+import simulationArea, { changeClockTime } from './simulationArea';
+import {
+    stripTags, uniq, showMessage, showError,
+} from './utils';
+import { findDimensions, dots } from './canvasApi';
+import { updateRestrictedElementsList } from './restrictedElementDiv';
+import { scheduleBackup } from './data/backupCircuit';
+import { showProperties } from './ux';
+import {
+    scheduleUpdate, updateSimulationSet,
+    updateCanvasSet, updateSubcircuitSet,
+    forceResetNodesSet, changeLightMode,
+} from './engine';
+import { toggleLayoutMode, layoutModeGet } from './layoutMode';
+import { setProjectName } from './data/save';
+import { changeClockEnable } from './sequential';
+import { changeInputSize } from './modules';
+
+export const circuitProperty = {
+    toggleLayoutMode,
+    setProjectName,
+    changeCircuitName,
+    changeClockTime,
+    deleteCurrentCircuit,
+    changeClockEnable,
+    changeInputSize,
+    changeLightMode,
+};
+export let scopeList = {};
+export function resetScopeList() {
+    scopeList = {};
 }
-var width
-var height
-export {
-    width,
-    height
-}
-export function hello() {
-    console.log("hello")
-}
-//to resize window and setup things
-function resetup() {
-    
-    DPR = window.devicePixelRatio || 1;
-    if (lightMode)
-    DPR = 1;
-    width = document.getElementById("simulationArea").clientWidth * DPR;
+/**
+ * Function used to change the current focusedCircuit
+ * Disables layoutMode if enabled
+ * Changes UI tab etc
+ * Sets flags to make updates, resets most of the things
+ * @param {string} id - identifier for circuit
+ * @category circuit
+ */
+export function switchCircuit(id) {
+    if (layoutModeGet()) { toggleLayoutMode(); }
+
+    // globalScope.fixLayout();
+    scheduleBackup();
+    if (id === globalScope.id) return;
+    $(`#${globalScope.id}`).removeClass('current');
+    $(`#${id}`).addClass('current');
+    simulationArea.lastSelected = undefined;
+    simulationArea.multipleObjectSelections = [];
+    simulationArea.copyList = [];
+    globalScope = scopeList[id];
+    updateSimulationSet(true);
+    updateSubcircuitSet(true);
+    forceResetNodesSet(true);
+    dots(false);
+    simulationArea.lastSelected = globalScope.root;
     if (!embed) {
-        height = (document.getElementById("simulation").clientHeight ) * DPR;
-    } else {
-        height = (document.getElementById("simulation").clientHeight) * DPR;
+        showProperties(simulationArea.lastSelected);
     }
-    
-    //setup simulationArea
-    backgroundArea.setup();
-    if (!embed) plotArea.setup();
-    simulationArea.setup();
-    
-    // update();
-    dots();
-    
-    document.getElementById("backgroundArea").style.height = height / DPR + 100;
-    document.getElementById("backgroundArea").style.width = width / DPR + 100;
-    document.getElementById("canvasArea").style.height = height / DPR;
-    simulationArea.canvas.width = width;
-    simulationArea.canvas.height = height;
-    backgroundArea.canvas.width = width + 100 * DPR;
-    backgroundArea.canvas.height = height + 100 * DPR;
+    updateCanvasSet(true);
+    scheduleUpdate();
+
+    // to update the restricted elements information
+    updateRestrictedElementsList();
+}
+
+/**
+ * Deletes the current circuit
+ * Ensures that at least one circuit is there
+ * Ensures that no circuit depends on the current circuit
+ * Switched to a random circuit
+  * @category circuit
+*/
+function deleteCurrentCircuit(scopeId = globalScope.id) {
+    const scope = scopeList[scopeId];
+    if (Object.keys(scopeList).length <= 1) {
+        showError('At least 2 circuits need to be there in order to delete a circuit.');
+        return;
+    }
+    let dependencies = '';
+    for (id in scopeList) {
+        if (id != scope.id && scopeList[id].checkDependency(scope.id)) {
+            if (dependencies === '') {
+                dependencies = scopeList[id].name;
+            } else {
+                dependencies += `, ${scopeList[id].name}`;
+            }
+        }
+    }
+    if (dependencies) {
+        dependencies = `\nThe following circuits are depending on '${scope.name}': ${dependencies}\nDelete subcircuits of ${scope.name} before trying to delete ${scope.name}`;
+        alert(dependencies);
+        return;
+    }
+
+    const confirmation = confirm(`Are you sure want to delete: ${scope.name}\nThis cannot be undone.`);
+    if (confirmation) {
+        $(`#${scope.id}`).remove();
+        delete scopeList[scope.id];
+        switchCircuit(Object.keys(scopeList)[0]);
+        showMessage('Circuit was successfully deleted');
+    } else { showMessage('Circuit was not deleted'); }
+}
+
+/**
+ * Function to create new circuit
+ * Function creates button in tab, creates scope and switches to this circuit
+ * @param {string} name - name of the new circuit
+ * @param {string} id - identifier for circuit
+ * @category circuit
+ */
+export function newCircuit(name, id) {
+    name = name || prompt('Enter circuit name:');
+    name = stripTags(name);
+    if (!name) return;
+    const scope = new Scope(name);
+    if (id) scope.id = id;
+    scopeList[scope.id] = scope;
+    globalScope = scope;
+    $('.circuits').removeClass('current');
+    $('#tabsBar').append(`<div class='circuits toolbarButton current' id='${scope.id}'>${name}<span class ='tabsCloseButton' id='${scope.id}'  ><i class="fa fa-times"></i></span></div>`);
+    $('.circuits').click(function () {
+        switchCircuit(this.id);
+    });
+    $('.tabsCloseButton').click(function (e) {
+        e.stopPropagation();
+        deleteCurrentCircuit(this.id);
+    });
     if (!embed) {
-        plotArea.c.width = document.getElementById("plot").clientWidth;
-        plotArea.c.height = document.getElementById("plot").clientHeight
+        showProperties(scope.root);
     }
-    
-    updateCanvas = true;
-    update(); // INEFFICIENT, needs to be deprecated
-    simulationArea.prevScale = 0;
-    dots(true, false);
+    dots(false);
+    return scope;
 }
 
-function setupElementLists() {
-    
-    $('#menu').empty();
-
-    window.circuitElementList = metadata.circuitElementList;
-    window.annotationList = metadata.annotationList;
-    window.inputList = metadata.inputList;
-    window.subCircuitInputList = metadata.subCircuitInputList;
-    window.moduleList = [...circuitElementList, ...annotationList]
-    window.updateOrder = ["wires", ...circuitElementList, "nodes", ...annotationList]; // Order of update
-    window.renderOrder = [...(moduleList.slice().reverse()), "wires", "allNodes"]; // Order of render
-
-
-    function createIcon(element) {
-        return `<div class="icon logixModules" id="${element}" >
-            <img src= "img/${element}.svg" >
-            <p class="img__description">${element}</p>
-        </div>`;
-    }
-
-    let elementHierarchy = metadata.elementHierarchy;
-    for (let category in elementHierarchy) {
-        let htmlIcons = '';
-
-        let categoryData = elementHierarchy[category];
-
-        for (let i = 0; i < categoryData.length; i++) {
-            let element = categoryData[i];
-            htmlIcons += createIcon(element);
-        }
-
-        let accordionData = `<div class="panelHeader">${category}</div>
-            <div class="panel" style="overflow-y:hidden">
-              ${htmlIcons}
-            </div>`;
-
-        $('#menu').append(accordionData);
-
-    }
-
-
+/**
+ * Used to change name of a circuit
+ * @param {string} name - new name
+ * @param {string} id - id of the circuit
+ * @category circuit
+ */
+export function changeCircuitName(name, id = globalScope.id) {
+    name = name || 'Untitled';
+    name = stripTags(name);
+    $(`#${id}`).html(name);
+    scopeList[id].name = name;
 }
 
-export function setup() {
-
-    setupElementLists();
-    setupEnvironment();
-    if (!embed)
-        setupUI();
-    startListeners();
-    projectName = "untitled"
-    // Load project data after 1 second - needs to be improved, delay needs to be eliminated
-    setTimeout(function () {
-        if (logix_project_id != 0) {
-            $('.loadingIcon').fadeIn();
-            $.ajax({
-                url: '/simulator/get_data',
-                type: 'POST',
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'))
-                },
-                data: {
-                    "id": logix_project_id
-                },
-                success: function (response) {
-                    data = (response);
-
-                    if (data) {
-                        load(data);
-                        simulationArea.changeClockTime(data["timePeriod"] || 500);
-                    }
-                    $('.loadingIcon').fadeOut();
-                },
-                failure: function () {
-                    alert("Error: could not load ");
-                    $('.loadingIcon').fadeOut();
-                }
-            });
-
-        }
-
-        // Restore unsaved data and save
-        else if (localStorage.getItem("recover_login") && userSignedIn) {
-            var data = JSON.parse(localStorage.getItem("recover_login"));
-            load(data);
-            localStorage.removeItem("recover");
-            localStorage.removeItem("recover_login");
-            save();
-        }
-
-        // Restore unsaved data which didn't get saved due to error
-        else if (localStorage.getItem("recover")) {
-            showMessage("We have detected that you did not save your last work. Don't worry we have recovered them. Access them using Project->Recover")
-        }
-    }, 1000);
-
-
-}
-
-export class Scope {
-    constructor(name = "localScope", id = undefined) {
+/**
+ * Class representing a Scope
+ * @class
+ * @param {string} name - name of the circuit
+ * @param {number=} id - a random id for the circuit
+ * @category circuit
+ */
+export default class Scope {
+    constructor(name = 'localScope', id = undefined) {
         this.restrictedCircuitElementsUsed = [];
         this.id = id || Math.floor((Math.random() * 100000000000) + 1);
         this.CircuitElement = [];
 
-        //root object for referring to main canvas - intermediate node uses this
-        this.root = new CircuitElement(0, 0, this, "RIGHT", 1);
+        // root object for referring to main canvas - intermediate node uses this
+        this.root = new CircuitElement(0, 0, this, 'RIGHT', 1);
         this.backups = [];
         this.timeStamp = new Date().getTime();
 
@@ -180,16 +181,16 @@ export class Scope {
         this.oy = 0;
         this.scale = DPR;
         this.tunnelList = {};
-        this.stack = []
+        this.stack = [];
 
         this.name = name;
-        this.pending = []
-        this.nodes = []; //intermediate nodes only
+        this.pending = [];
+        this.nodes = []; // intermediate nodes only
         this.allNodes = [];
         this.wires = [];
 
         // Creating arrays for other module elements
-        for (var i = 0; i < moduleList.length; i++) {
+        for (let i = 0; i < moduleList.length; i++) {
             this[moduleList[i]] = [];
         }
 
@@ -200,7 +201,7 @@ export class Scope {
             title_x: 50,
             title_y: 13,
             titleEnabled: true,
-        }
+        };
 
 
         // FOR SOME UNKNOWN REASON, MAKING THE COPY OF THE LIST COMMON
@@ -211,90 +212,93 @@ export class Scope {
         // this.renderObjectOrder = [ ...(moduleList.slice().reverse()), "wires", "allNodes"];
     }
 
-    // Resets all nodes recursively
+    /**
+     * Resets all nodes recursively
+     */
     reset() {
-        for (var i = 0; i < this.allNodes.length; i++)
-            this.allNodes[i].reset();
-        for (var i = 0; i < this.Splitter.length; i++) {
+        for (let i = 0; i < this.allNodes.length; i++) { this.allNodes[i].reset(); }
+        for (let i = 0; i < this.Splitter.length; i++) {
             this.Splitter[i].reset();
         }
-        for (var i = 0; i < this.SubCircuit.length; i++) {
+        for (let i = 0; i < this.SubCircuit.length; i++) {
             this.SubCircuit[i].reset();
         }
-
     }
 
-    // Adds all inputs to simulationQueue
+    /**
+     * Adds all inputs to simulationQueue
+    */
     addInputs() {
-        for (var i = 0; i < inputList.length; i++) {
-            for (var j = 0; j < this[inputList[i]].length; j++) {
+        for (let i = 0; i < inputList.length; i++) {
+            for (let j = 0; j < this[inputList[i]].length; j++) {
                 simulationArea.simulationQueue.add(this[inputList[i]][j], 0);
             }
         }
 
-        for (let j = 0; j < this.SubCircuit.length; j++)
-            this.SubCircuit[j].addInputs();
-
+        for (let i = 0; i < this.SubCircuit.length; i++) { this.SubCircuit[i].addInputs(); }
     }
 
-    // Ticks clocks recursively -- needs to be deprecated and synchronize all clocks with a global clock
+    /**
+     * Ticks clocks recursively -- needs to be deprecated and synchronize all clocks with a global clock
+     */
     clockTick() {
-        for (var i = 0; i < this.Clock.length; i++)
-            this.Clock[i].toggleState(); //tick clock!
-        for (var i = 0; i < this.SubCircuit.length; i++)
-            this.SubCircuit[i].localScope.clockTick(); //tick clock!
+        for (let i = 0; i < this.Clock.length; i++) { this.Clock[i].toggleState(); } // tick clock!
+        for (let i = 0; i < this.SubCircuit.length; i++) { this.SubCircuit[i].localScope.clockTick(); } // tick clock!
     }
 
-    // Checks if this circuit contains directly or indirectly scope with id
-    // Recursive nature
+    /**
+     * Checks if this circuit contains directly or indirectly scope with id
+     * Recursive nature
+     */
     checkDependency(id) {
-        if (id == this.id) return true;
-        for (var i = 0; i < this.SubCircuit.length; i++)
-            if (this.SubCircuit[i].id == id) return true;
+        if (id === this.id) return true;
+        for (let i = 0; i < this.SubCircuit.length; i++) { if (this.SubCircuit[i].id === id) return true; }
 
-        for (var i = 0; i < this.SubCircuit.length; i++)
-            if (scopeList[this.SubCircuit[i].id].checkDependency(id)) return true;
+        for (let i = 0; i < this.SubCircuit.length; i++) { if (scopeList[this.SubCircuit[i].id].checkDependency(id)) return true; }
 
-        return false
+        return false;
     }
 
-    // Get dependency list - list of all circuits, this circuit depends on
+    /**
+     * Get dependency list - list of all circuits, this circuit depends on
+     */
     getDependencies() {
-        var list = []
-        for (var i = 0; i < this.SubCircuit.length; i++) {
+        const list = [];
+        for (let i = 0; i < this.SubCircuit.length; i++) {
             list.push(this.SubCircuit[i].id);
             list.extend(scopeList[this.SubCircuit[i].id].getDependencies());
         }
         return uniq(list);
     }
 
-    // helper function to reduce layout size
+    /**
+     * helper function to reduce layout size
+    */
     fixLayout() {
-        var max_y = 20;
-        for (var i = 0; i < this.Input.length; i++)
-            max_y = Math.max(this.Input[i].layoutProperties.y, max_y)
-        for (var i = 0; i < this.Output.length; i++)
-            max_y = Math.max(this.Output[i].layoutProperties.y, max_y)
-        if (max_y != this.layout.height)
-            this.layout.height = max_y + 10;
+        let maxY = 20;
+        for (let i = 0; i < this.Input.length; i++) { maxY = Math.max(this.Input[i].layoutProperties.y, maxY); }
+        for (let i = 0; i < this.Output.length; i++) { maxY = Math.max(this.Output[i].layoutProperties.y, maxY); }
+        if (maxY !== this.layout.height) { this.layout.height = maxY + 10; }
     }
 
-    // Function which centers the circuit to the correct zoom level
+
+    /**
+     * Function which centers the circuit to the correct zoom level
+     */
     centerFocus(zoomIn = true) {
-        if (layoutMode) return;
+        if (layoutModeGet()) return;
         findDimensions(this);
-        var minX = simulationArea.minWidth || 0;
-        var minY = simulationArea.minHeight || 0;
-        var maxX = simulationArea.maxWidth || 0;
-        var maxY = simulationArea.maxHeight || 0;
+        const minX = simulationArea.minWidth || 0;
+        const minY = simulationArea.minHeight || 0;
+        const maxX = simulationArea.maxWidth || 0;
+        const maxY = simulationArea.maxHeight || 0;
 
-        var reqWidth = maxX - minX + 150;
-        var reqHeight = maxY - minY + 150;
+        const reqWidth = maxX - minX + 150;
+        const reqHeight = maxY - minY + 150;
 
-        this.scale = Math.min(width / reqWidth, height / reqHeight)
+        this.scale = Math.min(width / reqWidth, height / reqHeight);
 
-        if (!zoomIn)
-            this.scale = Math.min(this.scale, DPR);
+        if (!zoomIn) { this.scale = Math.min(this.scale, DPR); }
         this.scale = Math.max(this.scale, DPR / 10);
 
         this.ox = (-minX) * this.scale + (width - (maxX - minX) * this.scale) / 2;
