@@ -9,7 +9,7 @@ let page
 beforeAll(async () => {
     browser = await puppeteer.launch()
     page = await browser.newPage()
-    await page.goto('file:///home/deku/2sim/index.html')
+    await page.goto('file://' + process.cwd() +'/index.html')
 })
 
 describe('button', function () {
