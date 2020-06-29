@@ -18,9 +18,9 @@ describe('button', function () {
         await page.click('#zoomIn')
         const newScale = await page.evaluate(() => globalScope.scale);
         expect(newScale).toBeGreaterThan(prevScale);
-    },100000)
+    },1000000)
 
-    it("zooms on scrlling", async () => {
+    it("zooms on scrolling", async () => {
         const prevScale = await page.evaluate(() => globalScope.scale);
         await page.waitForSelector('#simulationArea');
         await page.hover('#simulationArea');
@@ -31,7 +31,7 @@ describe('button', function () {
         });
         const newScale = await page.evaluate(() => globalScope.scale);
         expect(newScale).toBeGreaterThan(prevScale);
-    });
+    },1000000);
 
     afterAll(async () => {
         await browser.close()
