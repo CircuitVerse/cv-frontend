@@ -27,6 +27,7 @@ import { toggleLayoutMode, layoutModeGet } from './layoutMode';
 import { setProjectName } from './data/save';
 import { changeClockEnable } from './sequential';
 import { changeInputSize } from './modules';
+import isElectron from 'is-electron';
 
 export const circuitProperty = {
     toggleLayoutMode,
@@ -123,6 +124,10 @@ function deleteCurrentCircuit(scopeId = globalScope.id) {
  * @category circuit
  */
 export function newCircuit(name, id) {
+    if (!name && isElectron()){
+        // temporary till  we get a modal to input name
+        name = "sub" + Math.floor(Math.random() * 10000)
+    }
     name = name || prompt('Enter circuit name:');
     name = stripTags(name);
     if (!name) return;

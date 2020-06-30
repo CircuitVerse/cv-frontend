@@ -1,18 +1,18 @@
 <html>
-  <script src="dist/bundle.js"></script>
+  <script src="http://localhost:9000/bundle.js"></script>
   <link
     rel="stylesheet"
     type="text/css"
     href="./node_modules/jquery-ui-dist/jquery-ui.css"
   />
-<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js"></script>
 
   <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">  -->
   <!-- <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> -->
   <script>
     var userSignedIn = 1;
     var logix_project_id = 0;
-    var projectName = "Shubhankar's Test";
+    var projectName = "Shubhankar";
   </script>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <a class="navbar-brand" href="/">CircuitVerse</a>
@@ -142,13 +142,8 @@
         class="projectName noSelect defaultCursor font-weight-bold"
         id="projectName"
       >
-        Untitled
+        Shubhankar
       </span>
-      <ul class="nav navbar-nav noSelect pointerCursor pull-right">
-        <li class="dropdown pull-right">
-          <a class="navbar-nav nav-link"> Sign In </a>
-        </li>
-      </ul>
     </div>
     <!-- /.navbar-collapse -->
   </nav>
@@ -169,13 +164,13 @@
         <!-- <div> Circuits: </div> -->
       </div>
       <div class="simulation" id="simulation">
-        <div id="restrictedDiv" class="alert alert-danger display--none"></div>
+        <!-- <div id="restrictedDiv" class="alert alert-danger display--none"></div>
         <div id="restrictedElementsDiv" class="alert alert-danger">
           <div>
             Restricted elements used:
             <span id="restrictedElementsDiv--list"> </span>
           </div>
-        </div>
+        </div> -->
         <div id="MessageDiv"></div>
         <div class="canvasArea" id="canvasArea">
           <canvas
