@@ -69,7 +69,7 @@ window.addEventListener('orientationchange', resetup); // listener
  * @category setup
  */
 function setupEnvironment() {
-    const projectId = generateId();
+    projectId = generateId();
     updateSimulationSet(true);
     const DPR = window.devicePixelRatio || 1;
     newCircuit('Main');
