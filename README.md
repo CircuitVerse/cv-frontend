@@ -1,4 +1,4 @@
-<img src="/img/cvlogo.svg" alt="The CircuitVerse logo" width="736"/> </br></br>
+<img url="https://raw.githubusercontent.com/CircuitVerse/CircuitVerse/d5ebd5586221b772b28af9c3a9bbeb39cfdb469e/app/assets/images/cvlogo.svg" alt="The CircuitVerse logo" width="736"/> </br></br>
 [CircuitVerse](https://circuitverse.org) is a free, open-source platform which allows users to construct digital logic circuits online. We also offer the [Interactive Book](https://learn.circuitverse.org) which teaches users on the fundamentals of modern, digital circuits. Please also see our [documentation](https://docs.circuitverse.org) or [GitHub Wiki](https://github.com/CircuitVerse/CircuitVerse/wiki/).
 
 ## Community
