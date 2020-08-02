@@ -11,6 +11,7 @@ We follow the [Code of Conduct](code-of-conduct.md) of the [CircuitVerse](https:
 
 ## Setup
 - Install [npm](https://www.npmjs.com/get-npm)
+
 To run it one time:
 - npm run build
 - Open index.html
