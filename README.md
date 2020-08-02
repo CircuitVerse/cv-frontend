@@ -11,17 +11,18 @@ We follow the [Code of Conduct](code-of-conduct.md) of the [CircuitVerse](https:
 
 ## Setup
 - Install [npm](https://www.npmjs.com/get-npm)
+- `npm install`
 
 To run it one time:
-- npm run build
-- Open index.html
+- `npm run build`
+- Open `index.html`
 
 To start development server:
-- npm run start
-- Open IndexDev.html (Incoming).
+- `npm run start`
+- Open `indexDev.html`.
 
 To run tests:
-- npm run test
+- `npm run test`
 
 ## License
 This project is licensed under the [MIT License](LICENSE).
