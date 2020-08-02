@@ -1,17 +1,17 @@
 /**
  * @jest-environment jsdom
  */
-import { setup } from '../../src/setup'
+import { setup } from '../src/setup'
 setup()
-import AndGate from '../../src/modules/AndGate'
-import OrGate from '../../src/modules/OrGate';
-import XnorGate from '../../src/modules/XnorGate';
-import XorGate from '../../src/modules/XorGate';
-import NandGate from '../../src/modules/NandGate';
-import NorGate from '../../src/modules/NorGate';
-import NotGate from '../../src/modules/NotGate';
-import Input from '../../src/modules/Input'
-import { update, updateSimulationSet } from '../../src/engine'
+import AndGate from '../src/modules/AndGate'
+import OrGate from '../src/modules/OrGate';
+import XnorGate from '../src/modules/XnorGate';
+import XorGate from '../src/modules/XorGate';
+import NandGate from '../src/modules/NandGate';
+import NorGate from '../src/modules/NorGate';
+import NotGate from '../src/modules/NotGate';
+import Input from '../src/modules/Input'
+import { update, updateSimulationSet } from '../src/engine'
 
 /*
  * AndGate test

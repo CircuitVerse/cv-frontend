@@ -1,15 +1,15 @@
 /**
  * @jest-environment jsdom
  */
-import { setup } from '../../src/setup'
+import { setup } from '../src/setup'
 setup()
-import Input from '../../src/modules/Input'
-import { update, updateSimulationSet } from '../../src/engine'
-import Dlatch from '../../src/sequential/Dlatch';
-import DflipFlop from '../../src/sequential/DflipFlop';
-import TflipFlop from '../../src/sequential/TflipFlop';
-import SRflipFlop from '../../src/sequential/SRflipFlop';
-import JKflipFlop from '../../src/sequential/JKflipFlop';
+import Input from '../src/modules/Input'
+import { update, updateSimulationSet } from '../src/engine'
+import Dlatch from '../src/sequential/Dlatch';
+import DflipFlop from '../src/sequential/DflipFlop';
+import TflipFlop from '../src/sequential/TflipFlop';
+import SRflipFlop from '../src/sequential/SRflipFlop';
+import JKflipFlop from '../src/sequential/JKflipFlop';
 
 /*
  * Dlatch test

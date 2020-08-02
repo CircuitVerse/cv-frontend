@@ -1,12 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-import { setup } from '../../src/setup'
+import { setup } from '../src/setup'
 setup()
-import Multiplexer from '../../src/modules/Multiplexer'
-import Demultiplexer from '../../src/modules/Demultiplexer'
-import Input from '../../src/modules/Input'
-import { update, updateSimulationSet } from '../../src/engine'
+import Multiplexer from '../src/modules/Multiplexer'
+import Demultiplexer from '../src/modules/Demultiplexer'
+import Input from '../src/modules/Input'
+import { update, updateSimulationSet } from '../src/engine'
 
 /*
  * Multiplexer test
