@@ -10,18 +10,17 @@ We would love to hear from you! We communicate on the following platforms:
 We follow the [Code of Conduct](code-of-conduct.md) of the [CircuitVerse](https://circuitverse.org) Community.
 
 ## Setup
-See [`SETUP.md`](SETUP.md) for more information on setting up CircuitVerse codebase.
+- Install [npm](https://www.npmjs.com/get-npm)
+To run it one time:
+- npm run build
+- Open index.html
 
-## Contributing
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for more information on contributing to CircuitVerse.
+To start development server:
+- npm run start
+- Open IndexDev.html (Incoming).
 
-## Required Software
-- [Git](https://git-scm.com/) - using a GUI such as [SourceTree](https://www.sourcetreeapp.com/) or [GitHub Desktop](https://desktop.github.com/) can help.
-- [Ruby on Rails](https://rubyonrails.org/)
-- [PostgreSQL](https://www.postgresql.org/)
-- [Yarn](https://yarnpkg.com/)
-- [Redis](https://redis.io/)
-- [ImageMagick](https://imagemagick.org/)
+To run tests:
+- npm run test
 
 ## License
 This project is licensed under the [MIT License](LICENSE).
