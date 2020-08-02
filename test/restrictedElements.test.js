@@ -10,14 +10,14 @@
 
 // jest
 //     .dontMock('fs');
-// describe('button', () => {
-//     it("validates that an restricted element is normal at first", () => {
+describe('button', () => {
+    it("validates that an restricted element is normal at first", () => {
 //         expect(($('#restrictedElementsDiv--list').text())).toEqual(" ")
-//     });
+    });
 //     it("validates that an restricted element is shown in restricted items div when it is used", () => {
 //         window.restrictedElements = ["AndGate"]
 //         new AndGate(40, 40)
 //         updateRestrictedElementsInScope()
 //         expect(($('#restrictedElementsDiv--list').text())).toEqual("AndGate")
 //     });
-// });
+});
