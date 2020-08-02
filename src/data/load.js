@@ -160,7 +160,7 @@ export default function load(data) {
         return;
     }
 
-    const { projectId } = data;
+    projectId = data.projectId;
     let projectName = data.name;
 
     if (data.name === 'Untitled') { projectName = undefined; } else { setProjectName(data.name); }

@@ -3,6 +3,7 @@
 /* eslint-disable import/no-cycle */
 /* eslint-disable no-restricted-globals */
 /* eslint-disable no-alert */
+import isElectron from 'is-electron';
 import { resetScopeList, scopeList, newCircuit } from '../circuit';
 import { showMessage, showError } from '../utils';
 import { checkIfBackup } from './backupCircuit';
@@ -31,26 +32,40 @@ export function recoverProject() {
  * @category data
  */
 export function openOffline() {
-    $('#openProjectDialog').empty();
-    const projectList = JSON.parse(localStorage.getItem('projectList'));
-    let flag = true;
-    for (id in projectList) {
-        flag = false;
-        $('#openProjectDialog').append(`<label class="option"><input type="radio" name="projectId" value="${id}" />${projectList[id]}<i class="fa fa-times deleteOfflineProject" onclick="deleteOfflineProject('${id}')"></i></label>`);
-    }
-    if (flag) $('#openProjectDialog').append('<p>Looks like no circuit has been saved yet. Create a new one and save it!</p>');
-    $('#openProjectDialog').dialog({
-        width: 'auto',
-        buttons: !flag ? [{
-            text: 'Open Project',
-            click() {
-                if (!$('input[name=projectId]:checked').val()) return;
-                load(JSON.parse(localStorage.getItem($('input[name=projectId]:checked').val())));
-                $(this).dialog('close');
-            },
-        }] : [],
+    if (isElectron()) {
+        window.ipcRenderer.send("open")
+        window.ipcRenderer.on("setLogix", (e, dir) => {
+            console.log(dir);
+            logix_project_id = dir;
+        })
+        window.ipcRenderer.on("loadData", (e,loadData) => {
+            console.log(loadData)
+            load(JSON.parse(loadData));
+        })
 
-    });
+    }
+    else {
+        $('#openProjectDialog').empty();
+        const projectList = JSON.parse(localStorage.getItem('projectList'));
+        let flag = true;
+        for (id in projectList) {
+            flag = false;
+            $('#openProjectDialog').append(`<label class="option"><input type="radio" name="projectId" value="${id}" />${projectList[id]}<i class="fa fa-times deleteOfflineProject" onclick="deleteOfflineProject('${id}')"></i></label>`);
+        }
+        if (flag) $('#openProjectDialog').append('<p>Looks like no circuit has been saved yet. Create a new one and save it!</p>');
+        $('#openProjectDialog').dialog({
+            width: 'auto',
+            buttons: !flag ? [{
+                text: 'Open Project',
+                click() {
+                    if (!$('input[name=projectId]:checked').val()) return;
+                    load(JSON.parse(localStorage.getItem($('input[name=projectId]:checked').val())));
+                    $(this).dialog('close');
+                },
+            }] : [],
+
+        });
+    }
 }
 /**
  * Flag for project saved or not
@@ -94,12 +109,16 @@ function checkToSave() {
  * @category data
  */
 window.onbeforeunload = function () {
+    if (isElectron()) {
+        // because alert are not supported so temp code until modals are here
+        return;
+    }
     if (projectSaved || embed) return;
 
     if (!checkToSave()) return;
 
-    alert('You have unsaved changes on this page. Do you want to leave this page and discard your changes or stay on this page?');
-    const data = generateSaveData('Untitled');
+    window.alert('You have unsaved changes on this page. Do you want to leave this page and discard your changes or stay on this page?');
+    const data = generateSaveData('');
     localStorage.setItem('recover', data);
     // eslint-disable-next-line consistent-return
     return 'Are u sure u want to leave? Any unsaved changes may not be recoverable';
@@ -129,7 +148,12 @@ export function newProject(verify) {
     if (verify || projectSaved || !checkToSave() || confirm('What you like to start a new project? Any unsaved changes will be lost.')) {
         clearProject();
         localStorage.removeItem('recover');
-        window.location = '/simulator';
+        if (isElectron()){
+            logix_project_id = 0;
+        }
+        else{
+            window.location = '/simulator';
+        }
 
         projectName = undefined;
         projectId = generateId();

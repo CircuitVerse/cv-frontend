@@ -8,7 +8,9 @@ module.exports = {
     filename: 'bundle.js'
   },
   devServer: {
-    contentBase: './dist'
+    contentBase: './dist',
+    compress: true,
+    port: 9000
   },
   plugins: [
     new webpack.ProvidePlugin({

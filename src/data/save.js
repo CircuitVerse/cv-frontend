@@ -1,3 +1,4 @@
+import isElectron from 'is-electron';
 import { scopeList } from '../circuit';
 import { resetup } from '../setup';
 import { update } from '../engine';
@@ -15,7 +16,7 @@ import { projectSavedSet } from './project';
  */
 export function setProjectName(name) {
     name = stripTags(name);
-    const projectName = name;
+    projectName = name;
     $('#projectName').html(name);
 }
 
@@ -255,76 +256,104 @@ export default function save() {
 
     $('.loadingIcon').fadeIn();
     const data = generateSaveData();
-
-    if (!userSignedIn) {
-        // user not signed in, save locally temporarily and force user to sign in
-        localStorage.setItem('recover_login', data);
-        // Asking user whether they want to login.
-        if (confirm('You have to login to save the project, you will be redirected to the login page.')) window.location.href = '/users/sign_in';
-        else $('.loadingIcon').fadeOut();
-        // eslint-disable-next-line camelcase
-    } else if (logix_project_id === 0) {
-        // Create new project - this part needs to be improved and optimised
-        const form = $('<form/>', {
-            action: '/simulator/create_data',
-            method: 'post',
-        });
-        form.append(
-            $('<input>', {
-                type: 'hidden',
-                name: 'authenticity_token',
-                value: $('meta[name="csrf-token"]').attr('content'),
-            }),
-        );
-        form.append(
-            $('<input>', {
-                type: 'text',
-                name: 'data',
-                value: data,
-            }),
-        );
-        form.append(
-            $('<input>', {
-                type: 'text',
-                name: 'image',
-                value: generateImageForOnline(),
-            }),
-        );
-
-        form.append(
-            $('<input>', {
-                type: 'text',
-                name: 'name',
-                value: projectName,
-            }),
-        );
-
-        $('body').append(form);
-        form.submit();
-    } else {
-        // updates project - this part needs to be improved and optimised
-        $.ajax({
-            url: '/simulator/update_data',
-            type: 'POST',
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'));
-            },
-            data: {
-                data,
-                id: logix_project_id,
-                image: generateImageForOnline(),
+    if (isElectron()) {
+        if (logix_project_id === 0) {
+            // make a new file and save
+            listenToSimulator = false;
+            window.ipcRenderer.send("save", {
                 name: projectName,
-            },
-            success(response) {
-                showMessage(`We have saved your project: ${projectName} in our servers.`);
-                $('.loadingIcon').fadeOut();
-                localStorage.removeItem('recover');
-            },
-            failure(err) {
-                showMessage("There was an error, we couldn't save to our servers");
-                $('.loadingIcon').fadeOut();
-            },
-        });
+                data: data,
+            })
+            window.ipcRenderer.on("setLogix", (e, dir) => {
+                console.log(dir);
+                logix_project_id = dir;
+            })
+        }
+        else {
+            // we have a current file and we save changes in it
+            window.ipcRenderer.send("overwrite", {
+                dir: logix_project_id,
+                data: data,
+            })
+        }
+        window.ipcRenderer.on("message", (e, message) => {
+            showMessage(message)
+            $('.loadingIcon').fadeOut();
+            listenToSimulator = true;
+        })
+
+    }
+    else {
+        if (!userSignedIn) {
+            // user not signed in, save locally temporarily and force user to sign in
+            localStorage.setItem('recover_login', data);
+            // Asking user whether they want to login.
+            if (confirm('You have to login to save the project, you will be redirected to the login page.')) window.location.href = '/users/sign_in';
+            else $('.loadingIcon').fadeOut();
+            // eslint-disable-next-line camelcase
+        } else if (logix_project_id === 0) {
+            // Create new project - this part needs to be improved and optimised
+            const form = $('<form/>', {
+                action: '/simulator/create_data',
+                method: 'post',
+            });
+            form.append(
+                $('<input>', {
+                    type: 'hidden',
+                    name: 'authenticity_token',
+                    value: $('meta[name="csrf-token"]').attr('content'),
+                }),
+            );
+            form.append(
+                $('<input>', {
+                    type: 'text',
+                    name: 'data',
+                    value: data,
+                }),
+            );
+            form.append(
+                $('<input>', {
+                    type: 'text',
+                    name: 'image',
+                    value: generateImageForOnline(),
+                }),
+            );
+
+            form.append(
+                $('<input>', {
+                    type: 'text',
+                    name: 'name',
+                    value: projectName,
+                }),
+            );
+
+            $('body').append(form);
+            form.submit();
+        } else {
+            // updates project - this part needs to be improved and optimised
+            $.ajax({
+                url: '/simulator/update_data',
+                type: 'POST',
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'));
+                },
+                data: {
+                    data,
+                    id: logix_project_id,
+                    image: generateImageForOnline(),
+                    name: projectName,
+                },
+                success(response) {
+                    showMessage(`We have saved your project: ${projectName} in our servers.`);
+                    $('.loadingIcon').fadeOut();
+                    localStorage.removeItem('recover');
+                },
+                failure(err) {
+                    showMessage("There was an error, we couldn't save to our servers");
+                    $('.loadingIcon').fadeOut();
+                },
+            });
+        }
     }
 
     // Restore everything
