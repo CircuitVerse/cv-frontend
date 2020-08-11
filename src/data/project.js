@@ -7,7 +7,7 @@ import isElectron from 'is-electron';
 import { resetScopeList, scopeList, newCircuit } from '../circuit';
 import { showMessage, showError } from '../utils';
 import { checkIfBackup } from './backupCircuit';
-import { generateSaveData } from './save';
+import { generateSaveData, generateImage } from './save';
 import load from './load';
 
 /**
@@ -84,11 +84,40 @@ export function projectSavedSet(param) {
  */
 export function saveOffline() {
     const data = generateSaveData();
-    localStorage.setItem(projectId, data);
-    const temp = JSON.parse(localStorage.getItem('projectList')) || {};
-    temp[projectId] = projectName;
-    localStorage.setItem('projectList', JSON.stringify(temp));
-    showMessage(`We have saved your project: ${projectName} in your browser's localStorage`);
+    if (isElectron()) {
+        if (logix_project_id === 0) {
+            // make a new file and save
+            listenToSimulator = false;
+            window.ipcRenderer.send("save", {
+                name: projectName,
+                data: data,
+            })
+            window.ipcRenderer.on("setLogix", (e, dir) => {
+                console.log(dir);
+                logix_project_id = dir;
+            })
+        }
+        else {
+            // we have a current file and we save changes in it
+            window.ipcRenderer.send("overwrite", {
+                dir: logix_project_id,
+                data: data,
+            })
+        }
+        window.ipcRenderer.on("message", (e, message) => {
+            showMessage(message)
+            $('.loadingIcon').fadeOut();
+            listenToSimulator = true;
+        })
+
+    }
+    else {
+        localStorage.setItem(projectId, data);
+        const temp = JSON.parse(localStorage.getItem('projectList')) || {};
+        temp[projectId] = projectName;
+        localStorage.setItem('projectList', JSON.stringify(temp));
+        showMessage(`We have saved your project: ${projectName} in your browser's localStorage`);
+    }
 }
 
 /**

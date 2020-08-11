@@ -253,35 +253,22 @@ function generateImageForOnline() {
  */
 export default function save() {
     projectSavedSet(true);
-
     $('.loadingIcon').fadeIn();
     const data = generateSaveData();
+    $('.loadingIcon').fadeOut();
     if (isElectron()) {
-        if (logix_project_id === 0) {
-            // make a new file and save
-            listenToSimulator = false;
-            window.ipcRenderer.send("save", {
-                name: projectName,
-                data: data,
-            })
-            window.ipcRenderer.on("setLogix", (e, dir) => {
-                console.log(dir);
-                logix_project_id = dir;
-            })
-        }
-        else {
-            // we have a current file and we save changes in it
-            window.ipcRenderer.send("overwrite", {
-                dir: logix_project_id,
-                data: data,
-            })
-        }
+        // make a new file and save
+        listenToSimulator = false;
+        window.ipcRenderer.send("saveOnline", {
+            name: projectName,
+            data: data,
+            image: generateImageForOnline()
+        })
         window.ipcRenderer.on("message", (e, message) => {
             showMessage(message)
             $('.loadingIcon').fadeOut();
             listenToSimulator = true;
         })
-
     }
     else {
         if (!userSignedIn) {
