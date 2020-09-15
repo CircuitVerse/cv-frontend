@@ -1,3 +1,6 @@
+# adding out folder for jsdoc
+out
+
 logs
 *.log
 npm-debug.log*
