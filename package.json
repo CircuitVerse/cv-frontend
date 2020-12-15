@@ -44,7 +44,7 @@
     "bootstrap": "^4.5.0",
     "canvas": "^2.6.1",
     "css-loader": "^3.4.2",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "jquery-ui": "^1.12.1",
     "jquery-ui-bundle": "^1.12.1-migrate",
     "jquery-ui-dist": "^1.12.1",
